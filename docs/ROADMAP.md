@@ -78,6 +78,8 @@ is `complete`; closure verification is recorded in the linked report.
 | `CDLGW-003-AC01` | P0 | Given raw CDLG XES and drift metadata, when parsed, then every retained trace belongs to one ordered version and surplus traces are recorded without altering raw provenance. | `pytest tests/test_cdlg_metadata.py tests/test_annotate_versions.py -v` | RED/GREEN tasks; `CDLGW-003-EV01`. |
 | `CDLGW-003-AC02` | P0 | Given recovered process trees, when structures export, then each version has one parseable PTML, BPMN, and deterministic catalog row with valid IDs/references. | `pytest tests/test_structure.py -v` | RED/GREEN tasks; `CDLGW-003-EV02`. |
 
+**TDD proposal:** [2026-08-14-cdlgw-003-tdd-plan.md](superpowers/plans/2026-08-14-cdlgw-003-tdd-plan.md). Implementation awaits explicit approval.
+
 **Forbidden scope:** artificial event scheduling, resources, or downstream runtime integration.
 
 ### `CDLGW-004` — Execution Enrichment and Unified XES
