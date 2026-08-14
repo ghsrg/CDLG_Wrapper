@@ -18,8 +18,10 @@ project and Python environment.
 Read these files before benchmark-related analysis, planning, or implementation:
 
 1. `AGENTS.md`
-2. `README.md`
-3. `docs/superpowers/specs/2026-08-14-cdlg-versioned-xes-wrapper-design.md`
+2. `docs/PRINCIPLES.md`
+3. `docs/INDEX.md`
+4. `README.md`
+5. `docs/wrapper-design.md`
 
 Read upstream CDLG files only from the ignored local `CDLG/` checkout and only
 when its execution or output contract must be verified.
@@ -63,7 +65,9 @@ The design specification is the source of truth for the benchmark.
    `docs/superpowers/plans/`.
 6. Implement from the approved plan with tests and small reviewable changes.
 7. If implementation reveals an ambiguity or a required CDLG modification, stop
-   and revise the design rather than patching the ignored checkout.
+   and revise the design rather than patching the ignored checkout. Any proposed
+   CDLG change requires separate discussion, explicit approval, and documented
+   risk acceptance before it can be considered.
 
 Do not rely on chat history as the only record of a decision.
 
@@ -101,7 +105,7 @@ over this summary.
 - Supporting wrapper modules: `wrapper/`
 - Experiment configs: `configs/`
 - External-process launchers: `scripts/run_cdlg.ps1` and `scripts/run_cdlg.sh`
-- Design specifications: `docs/superpowers/specs/`
+- Canonical wrapper design: `docs/wrapper-design.md`
 - Implementation plans: `docs/superpowers/plans/`
 - Tests: `tests/`
 - Generated artifacts: `outputs/` (ignored)
@@ -118,7 +122,8 @@ Do not install CDLG into the benchmark or `bpm_prediction` environment.
 ## Repository Artifact Language
 
 Write code, identifiers, paths, comments, configuration keys, tests, commit
-messages, and repository documentation in English.
+messages, agent instructions, and stable technical labels in English. Human-
+facing documentation may be Ukrainian. Use standard Markdown links.
 
 ## Documentation Update Rule
 
@@ -135,3 +140,14 @@ Before finishing any benchmark-related task, check documentation impact:
 
 Every final task summary must state which documentation files were updated or why
 no documentation update was required.
+
+## How Agents Work Here
+
+1. Read the mandatory files and the relevant source specification before making
+   changes.
+2. Preserve the external `CDLG/` boundary and do not modify application code
+   during documentation-only tasks.
+3. Keep changes small, evidence-based, and linked from `docs/INDEX.md`.
+4. For meaningful implementation work, define acceptance criteria before coding,
+   run focused validation, then run the repository's available outer checks.
+5. Update `docs/ROADMAP.md` when scope, status, or open questions change.

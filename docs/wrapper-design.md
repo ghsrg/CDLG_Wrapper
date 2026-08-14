@@ -2,16 +2,18 @@
 
 ## Document Status
 
-- Status: Draft
+- Status: Approved Canon
 - Date: 2026-08-14
-- Repository: independent `cdlg_benchmark` repository
+- Repository: `CDLG_Wrapper` independent adapter repository
 - Implementation location: `wrapper/`
 - Integration mode: external pinned CDLG subprocess plus file exchange
-- Approval status: subprocess-boundary revision pending final user approval
+- Approval status: approved by user on 2026-08-14
 - Design review status: architecture, data flow, error handling, diagnostics, and
   test strategy approved; self-review complete
 
-This is a living design specification. Confirmed decisions are added during the brainstorming session. Implementation must not start until the design is complete and approved.
+This is the approved living design specification for the first experiment.
+Confirmed decisions may be clarified here, but implementation must not silently
+change the methodology, artifact contract, or repository boundary.
 
 ## Decision Recording Policy
 

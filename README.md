@@ -1,85 +1,74 @@
-# CDLG Structural Drift Benchmark
+# CDLG Adapter for bpm_prediction
 
-This repository contains an independent benchmark wrapper for generating and
-post-processing structural-drift datasets with CDLG.
+This repository is an adapter layer for
+[bpm_prediction](https://github.com/ghsrg/bpm_prediction). It runs an external
+installation of CDLG and converts CDLG-generated event logs into the
+version-aware XES, BPMN/PTML, and provenance artifacts required for structural
+drift experiments in `bpm_prediction`.
 
-CDLG is not vendored, copied, modified, or tracked by this repository. It is an
-external GPL-3.0 program that must be obtained separately and is invoked as a
-separate process. Integration uses configuration files, process exit status,
-standard output/error, raw XES files, and exported drift metadata.
+It is **not** another process simulator, a CDLG fork, or a prediction system.
+CDLG remains the upstream generator; `bpm_prediction` remains the system that
+builds structure, trains models, and evaluates prediction experiments.
 
-## Repository Boundary
-
-```text
-benchmark repository
-  -> external-process runner
-  -> ignored local CDLG checkout
-  -> raw XES and drift metadata
-  -> benchmark post-processing
-  -> versioned XES, BPMN/PTML, topology, and drift metrics
-```
-
-The benchmark wrapper must not import CDLG Python modules. CDLG source code,
-virtual environments, and runtime copies remain outside the benchmark's Git
-history.
-
-## Pinned CDLG Revision
-
-- Upstream: <https://gitlab.uni-mannheim.de/processanalytics/cdlg_tool>
-- License: GNU General Public License v3.0
-- Pinned upstream commit: `cbe1534`
-
-Prepare the ignored local checkout:
-
-```powershell
-git clone https://gitlab.uni-mannheim.de/processanalytics/cdlg_tool CDLG
-git -C CDLG checkout cbe1534
-```
-
-The runner must verify the actual CDLG commit before every benchmark run and
-record it in the generated manifest and methodology report.
-
-## Planned Layout
+## Responsibilities
 
 ```text
-wrapper/
-  generate_benchmark.py
-  annotate_versions.py
-  calculate_drift_metrics.py
-configs/
-  cdlg_experiment.yaml
-scripts/
-  run_cdlg.ps1
-  run_cdlg.sh
-docs/
-  superpowers/specs/
-CDLG/                       # ignored external upstream checkout
-README.md
-AGENTS.md
+CDLG
+  -> raw simulated XES and drift information
+  -> this adapter
+  -> versioned XES, BPMN/PTML per version, topology and provenance evidence
+  -> bpm_prediction
+  -> structural analysis, training, and evaluation
 ```
 
-## Planned Pipeline
+| Component | Responsibility |
+| --- | --- |
+| CDLG | Generates process trees, simulated traces, and its native drift behavior. |
+| This repository | Runs CDLG externally, reconstructs version artifacts, enriches and combines logs, and records reproducibility evidence. |
+| bpm_prediction | Consumes the resulting dataset for topology construction, statistics, prediction, and evaluation. |
 
-1. Resolve and preserve the benchmark configuration.
-2. Execute the pinned, unmodified CDLG checkout as a separate process.
-3. Preserve raw CDLG XES, drift metadata, stdout, stderr, exit code, and runtime
-   provenance.
-4. Annotate every trace and event with its process version.
-5. Parse CDLG process-tree snapshots from raw output and export one PTML and one
-   deterministic BPMN per version.
-6. Add the approved lifecycle, resource, timestamp, and natural-carryover model.
-7. Calculate structural drift metrics and topology-alignment evidence.
-8. Validate and publish one unified research-ready dataset bundle.
+The adapter preserves CDLG as the source of simulated control-flow. Its
+post-processing adds the experiment contract needed by `bpm_prediction`; it
+does not reimplement or modify CDLG's generator.
 
-Implementation has not started. The revised subprocess-based design
-specification must be approved before an implementation plan is written.
+## Planned dataset contract
 
-## Licensing Note
+For one experiment, the adapter will produce:
 
-The benchmark wrapper and its repository-owned materials are licensed under the
-MIT License in `LICENSE`.
+- one unified, version-annotated XES log;
+- one BPMN and one PTML representation for each process version;
+- version allocation, drift/topology metrics, and validation reports;
+- the resolved configuration, external CDLG revision, command trace, and a
+  machine-readable provenance manifest stored with the generated dataset.
 
-This repository does not redistribute CDLG. Users obtain CDLG from its upstream
-repository and are responsible for complying with its GPL-3.0 license. Generated
-artifacts preserve the exact CDLG URL, commit, configuration, and execution
-provenance. This repository documentation is not legal advice.
+The intended default experiment uses five configurable versions with roughly
+equal trace shares, a shared timeline, `start` and `complete` lifecycle events,
+optional `assign` events, and stable activity-specific resource pools.
+
+## Repository boundary
+
+The upstream CDLG clone is an external runtime dependency located locally in
+`CDLG/`. It is ignored by Git and is never copied, vendored, imported as a
+Python dependency, or modified by this repository. The adapter invokes CDLG
+only through a documented command boundary.
+
+The currently pinned upstream revision is:
+
+```text
+Repository: https://gitlab.uni-mannheim.de/processanalytics/cdlg_tool
+Commit:     cbe1534de94f06a3f1cca460b079d436f604445e
+```
+
+Before reproducing an experiment, clone CDLG separately, check out this commit,
+and create its Python 3.10 environment according to CDLG's own requirements.
+
+## Status
+
+The first-experiment architecture and specification are approved. Wrapper
+implementation has not started yet; the next step is the implementation plan.
+
+## License
+
+The adapter code and documentation in this repository are released under the
+[MIT License](LICENSE). CDLG remains a separate upstream project with its own
+license and terms.
