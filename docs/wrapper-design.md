@@ -218,6 +218,11 @@ published benchmark artifacts.
 - Use integer quotient/remainder allocation so the final sum is exactly `dataset.total_traces`.
 - Ensure that version trace counts differ by at most one when equal allocation is used.
 - Assign any remainder deterministically in ascending version order.
+- Because stock CDLG accepts one shared `Number_traces_per_process_model_version`
+  value, render `ceil(dataset.total_traces / version_count)` for CDLG, then
+  retain the resolved exact allocation from each contiguous version block during
+  post-processing. Preserve the complete untrimmed CDLG XES as raw provenance and
+  record retained and discarded trace counts per version in the manifest.
 - Record requested totals, actual per-version counts, and actual per-version percentages in the output manifest.
 - Reject zero versions, non-positive totals, duplicate version IDs, and allocations that would leave a configured version with zero traces.
 
