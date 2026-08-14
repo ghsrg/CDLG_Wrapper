@@ -4,7 +4,7 @@
 
 - `active_plan_id`: `CDLGW-004`
 - `active_slice`: Execution Enrichment and Unified XES
-- `implementation_status`: `CDLGW-003` complete; `CDLGW-004` TDD planning pending
+- `implementation_status`: `CDLGW-003` complete; `CDLGW-004` TDD proposal awaiting approval
 - `canonical_design`: [wrapper-design.md](wrapper-design.md)
 - `implementation_source_plan`: [2026-08-14-cdlg-wrapper-mvp.md](superpowers/plans/2026-08-14-cdlg-wrapper-mvp.md)
 
@@ -27,7 +27,7 @@ acceptance scenarios have independent evidence and closure verification.
 | `CDLGW-001` | Bootstrap and Configuration Contract | complete | Tasks 1-2 | Approved Canon | [Closure evidence](../outputs/worklogs/2026-08-14-2152-REPORT-CDLGW-001-bootstrap-configuration-contract.md) covers all acceptance scenarios. |
 | `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | complete | Task 3 | `CDLGW-001` | [Closure evidence](../outputs/worklogs/2026-08-14-2225-REPORT-CDLGW-002-external-cdlg-runner.md) covers all acceptance scenarios. |
 | `CDLGW-003` | Version Reconstruction and Structure Artifacts | complete | Tasks 4-5 | `CDLGW-002` | [Corrected closure evidence](../outputs/worklogs/2026-08-14-2309-REPORT-CDLGW-003-contract-correction.md) covers all acceptance scenarios against the real CDLG artifact contract. |
-| `CDLGW-004` | Execution Enrichment and Unified XES | planned | Tasks 6-7 | `CDLGW-003` | Versioned lifecycle/resource/timestamp XES and evidence bundle satisfy the XES contract. |
+| `CDLGW-004` | Execution Enrichment and Unified XES | in-progress | Tasks 6-7 | `CDLGW-003` | [TDD proposal](superpowers/plans/2026-08-14-cdlgw-004-tdd-plan.md) awaits approval; versioned lifecycle/resource/timestamp XES and draft evidence bundle are in scope. |
 | `CDLGW-005` | Validation, Publication, and CLI | planned | Tasks 8-9 | `CDLGW-004` | CLI publishes only strictly validated dataset bundles and preserves failed-run diagnostics. |
 | `CDLGW-006` | End-to-End and bpm_prediction Compatibility | planned | Task 10 | `CDLGW-005` | Real CDLG run and separate downstream compatibility smoke test pass. |
 
