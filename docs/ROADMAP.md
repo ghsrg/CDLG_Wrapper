@@ -2,9 +2,9 @@
 
 ## Delivery Status
 
-- `active_plan_id`: `CDLGW-001`
-- `active_slice`: Bootstrap and Configuration Contract
-- `implementation_status`: not started
+- `active_plan_id`: `CDLGW-002`
+- `active_slice`: External CDLG Execution and Raw Artifact Capture
+- `implementation_status`: CDLGW-001 closed; CDLGW-002 TDD planning pending
 - `canonical_design`: [wrapper-design.md](wrapper-design.md)
 - `implementation_source_plan`: [2026-08-14-cdlg-wrapper-mvp.md](superpowers/plans/2026-08-14-cdlg-wrapper-mvp.md)
 
@@ -24,8 +24,8 @@ acceptance scenarios have independent evidence and closure verification.
 
 | Plan ID | Slice | Status | Source plan coverage | Depends on | Completion boundary |
 | --- | --- | --- | --- | --- | --- |
-| `CDLGW-001` | Bootstrap and Configuration Contract | in-progress | Tasks 1-2 | Approved Canon | Valid YAML resolves into a reproducible, exact-allocation configuration with typed failures. |
-| `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | planned | Task 3 | `CDLGW-001` | Verified external checkout produces one captured raw XES and drift CSV without modifying `CDLG/`. |
+| `CDLGW-001` | Bootstrap and Configuration Contract | complete | Tasks 1-2 | Approved Canon | [Closure evidence](../outputs/worklogs/2026-08-14-2152-REPORT-CDLGW-001-bootstrap-configuration-contract.md) covers all acceptance scenarios. |
+| `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | in-progress | Task 3 | `CDLGW-001` | Verified external checkout produces one captured raw XES and drift CSV without modifying `CDLG/`. |
 | `CDLGW-003` | Version Reconstruction and Structure Artifacts | planned | Tasks 4-5 | `CDLGW-002` | Exact version mapping plus one parseable BPMN/PTML pair and catalog row per version. |
 | `CDLGW-004` | Execution Enrichment and Unified XES | planned | Tasks 6-7 | `CDLGW-003` | Versioned lifecycle/resource/timestamp XES and evidence bundle satisfy the XES contract. |
 | `CDLGW-005` | Validation, Publication, and CLI | planned | Tasks 8-9 | `CDLGW-004` | CLI publishes only strictly validated dataset bundles and preserves failed-run diagnostics. |
@@ -46,8 +46,8 @@ acceptance scenarios have independent evidence and closure verification.
 **Implementation evidence:** `CDLGW-001-EV01`, `CDLGW-001-EV02`,
 `CDLGW-001-EV03`, and `CDLGW-001-EV04` are produced by the focused pytest
 commands listed above. Latest local execution used the benchmark `.venv`
-interpreter because `python` is not on PATH in this workstation session. Status
-remains `in-progress` until closure verification reviews coverage.
+interpreter because `python` is not on PATH in this workstation session. Closure
+verification is recorded in the linked report and supports the `complete` status.
 
 **Forbidden scope:** invoking CDLG, writing dataset output, importing `bpm_prediction`, or implementing lifecycle/resource scheduling.
 
