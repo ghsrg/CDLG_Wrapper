@@ -43,6 +43,12 @@ acceptance scenarios have independent evidence and closure verification.
 | `CDLGW-001-AC02` | P0 | Given `total_traces=17` and five versions, when allocation resolves, then it is `[4,4,3,3,3]` and CDLG receives ceiling count `4`. | `pytest tests/test_trace_allocation.py -v` | RED/GREEN tasks; save result as `CDLGW-001-EV02`. |
 | `CDLGW-001-AC03` | P1 | Given invalid configuration or an expected wrapper error, when the CLI maps it, then it returns the documented typed exit code. | `pytest tests/test_errors.py -v` | RED/GREEN tasks; save result as `CDLGW-001-EV03`. |
 
+**Implementation evidence:** `CDLGW-001-EV01`, `CDLGW-001-EV02`,
+`CDLGW-001-EV03`, and `CDLGW-001-EV04` are produced by the focused pytest
+commands listed above. Latest local execution used the benchmark `.venv`
+interpreter because `python` is not on PATH in this workstation session. Status
+remains `in-progress` until closure verification reviews coverage.
+
 **Forbidden scope:** invoking CDLG, writing dataset output, importing `bpm_prediction`, or implementing lifecycle/resource scheduling.
 
 ### `CDLGW-002` — External CDLG Execution and Raw Artifact Capture

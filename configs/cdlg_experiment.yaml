@@ -1,0 +1,13 @@
+dataset:
+  total_traces: 1000
+  version_count: 5
+cdlg:
+  process_tree_complexity: middle
+  evolution_proportion: 0.2
+  drift_type: sudden
+  noise_enabled: false
+  checkout_path: CDLG
+lifecycle:
+  assign_enabled: false
+resources:
+  pool_size: 3

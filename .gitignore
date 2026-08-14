@@ -6,6 +6,7 @@
 /.venv-*/
 /venv/
 /env/
+/.worktrees/
 
 # IDE and Python caches
 /.idea/

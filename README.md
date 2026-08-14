@@ -62,6 +62,19 @@ Commit:     cbe1534de94f06a3f1cca460b079d436f604445e
 Before reproducing an experiment, clone CDLG separately, check out this commit,
 and create its Python 3.10 environment according to CDLG's own requirements.
 
+## Wrapper environment
+
+Create a separate Python environment for this benchmark repository and install
+only the wrapper dependencies:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Do not install CDLG into this environment. Configure CDLG as a separate external
+checkout and interpreter.
+
 ## Status
 
 The first-experiment architecture and specification are approved. Wrapper
