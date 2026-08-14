@@ -75,10 +75,25 @@ python -m venv .venv
 Do not install CDLG into this environment. Configure CDLG as a separate external
 checkout and interpreter.
 
+## External CDLG runner prerequisites
+
+Before using the runner layer, keep CDLG as a separate checkout at the pinned
+revision documented above and configure a separate CDLG Python interpreter. The
+wrapper verifies the checkout origin, commit, clean tracked state, license file,
+entry point, and parameter template before creating a disposable runtime copy.
+
+The runner invokes CDLG through `scripts/run_cdlg.ps1` on Windows or
+`scripts/run_cdlg.sh` on POSIX. It writes generated parameters only into the
+ignored runtime copy under `work/`, captures stdout and stderr, and copies the
+raw XES plus `drift_info.csv` into staging. It does not import CDLG modules,
+install CDLG into the wrapper environment, or modify the pinned checkout.
+
 ## Status
 
-The first-experiment architecture and specification are approved. Wrapper
-implementation has not started yet; the next step is the implementation plan.
+The first-experiment architecture and specification are approved. The wrapper
+currently includes the configuration contract and external CDLG runner layer;
+later slices still need version reconstruction, enrichment, validation,
+publication, and end-to-end compatibility work.
 
 ## License
 

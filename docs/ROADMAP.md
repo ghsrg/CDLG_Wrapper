@@ -2,9 +2,9 @@
 
 ## Delivery Status
 
-- `active_plan_id`: `CDLGW-002`
-- `active_slice`: External CDLG Execution and Raw Artifact Capture
-- `implementation_status`: CDLGW-001 closed; CDLGW-002 TDD planning pending
+- `active_plan_id`: `CDLGW-003`
+- `active_slice`: Version Reconstruction and Structure Artifacts
+- `implementation_status`: `CDLGW-002` closed; `CDLGW-003` TDD planning pending
 - `canonical_design`: [wrapper-design.md](wrapper-design.md)
 - `implementation_source_plan`: [2026-08-14-cdlg-wrapper-mvp.md](superpowers/plans/2026-08-14-cdlg-wrapper-mvp.md)
 
@@ -25,8 +25,8 @@ acceptance scenarios have independent evidence and closure verification.
 | Plan ID | Slice | Status | Source plan coverage | Depends on | Completion boundary |
 | --- | --- | --- | --- | --- | --- |
 | `CDLGW-001` | Bootstrap and Configuration Contract | complete | Tasks 1-2 | Approved Canon | [Closure evidence](../outputs/worklogs/2026-08-14-2152-REPORT-CDLGW-001-bootstrap-configuration-contract.md) covers all acceptance scenarios. |
-| `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | in-progress | Task 3 | `CDLGW-001` | Verified external checkout produces one captured raw XES and drift CSV without modifying `CDLG/`. |
-| `CDLGW-003` | Version Reconstruction and Structure Artifacts | planned | Tasks 4-5 | `CDLGW-002` | Exact version mapping plus one parseable BPMN/PTML pair and catalog row per version. |
+| `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | complete | Task 3 | `CDLGW-001` | [Closure evidence](../outputs/worklogs/2026-08-14-2225-REPORT-CDLGW-002-external-cdlg-runner.md) covers all acceptance scenarios. |
+| `CDLGW-003` | Version Reconstruction and Structure Artifacts | in-progress | Tasks 4-5 | `CDLGW-002` | TDD planning pending; requires raw CDLG artifact contract. |
 | `CDLGW-004` | Execution Enrichment and Unified XES | planned | Tasks 6-7 | `CDLGW-003` | Versioned lifecycle/resource/timestamp XES and evidence bundle satisfy the XES contract. |
 | `CDLGW-005` | Validation, Publication, and CLI | planned | Tasks 8-9 | `CDLGW-004` | CLI publishes only strictly validated dataset bundles and preserves failed-run diagnostics. |
 | `CDLGW-006` | End-to-End and bpm_prediction Compatibility | planned | Task 10 | `CDLGW-005` | Real CDLG run and separate downstream compatibility smoke test pass. |
@@ -59,6 +59,13 @@ verification is recorded in the linked report and supports the `complete` status
 | --- | --- | --- | --- | --- |
 | `CDLGW-002-AC01` | P0 | Given an incorrect, dirty, or incomplete checkout, when a run starts, then it fails before generation with component-specific diagnostics. | `pytest tests/test_cdlg_runner.py -v` using fake checkouts | RED/GREEN tasks; `CDLGW-002-EV01`. |
 | `CDLGW-002-AC02` | P0 | Given the pinned clean checkout and resolved configuration, when the runner executes, then it captures exactly one raw XES, drift CSV, command, stdout, stderr, and exit code without writing into `CDLG/`. | Focused runner test plus manual clean-worktree check | RED/GREEN tasks; `CDLGW-002-EV02`. |
+
+**Implementation evidence:** `CDLGW-002-EV01` is produced by
+`pytest tests/test_cdlg_runner.py -k checkout -v`; `CDLGW-002-EV02` is produced
+by `pytest tests/test_cdlg_runner.py -k runtime -v`; `CDLGW-002-EV03` is
+produced by `pytest tests/test_cdlg_runner.py -k "process or artifacts" -v`;
+`CDLGW-002-EV04` is produced by the full prior-plus-slice pytest command. Status
+is `complete`; closure verification is recorded in the linked report.
 
 **Forbidden scope:** CDLG source changes, Python imports from `CDLG/src`, or post-processing raw XES.
 
