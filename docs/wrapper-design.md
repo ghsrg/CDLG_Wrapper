@@ -397,8 +397,11 @@ environment before the dataset is used for training.
 
 - Produce one unified XES dataset containing traces from all process versions.
 - Preserve the unmodified raw CDLG XES as a provenance artifact.
-- Extract ordered process-tree snapshots and change metadata from the raw CDLG
-  XES log-level drift attributes.
+- Extract ordered process-tree snapshots and change metadata from CDLG's flat
+  `drift_info.csv` using the upstream columns `log_name`,
+  `drift_or_noise_id`, `drift_attribute`, `drift_sub_attribute`, and `value`.
+  Treat the raw XES log-level `drift:info` attribute as provenance that should
+  remain preserved with the raw XES, not as the only reconstruction source.
 - Parse CDLG process-tree strings with the benchmark environment's PM4Py
   `parse_process_tree()` support; do not use CDLG imports for reconstruction.
 - Produce exactly one BPMN XML artifact for each generated process version;
@@ -682,8 +685,9 @@ only the finalized files.
    generator through the external-process launcher.
 5. Capture command metadata, stdout, stderr, exit code, raw CDLG XES, and raw
    drift metadata before any transformation.
-6. Parse CDLG's process-tree snapshots and change boundaries. Verify that the raw
-   log represents one evolutionary chain with exactly `N` ordered structures.
+6. Parse CDLG's flat `drift_info.csv` process-tree snapshots and 1-based change
+   boundaries. Verify that the raw log represents one evolutionary chain with
+   exactly `N` ordered structures.
 7. Annotate raw traces and events as `v1...vN` from CDLG change boundaries and
    verify exact configured counts.
 8. Parse each process-tree string with PM4Py, then export one PTML and one

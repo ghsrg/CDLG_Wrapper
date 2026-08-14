@@ -2,9 +2,9 @@
 
 ## Delivery Status
 
-- `active_plan_id`: `CDLGW-003`
-- `active_slice`: Version Reconstruction and Structure Artifacts
-- `implementation_status`: `CDLGW-002` closed; `CDLGW-003` TDD planning pending
+- `active_plan_id`: `CDLGW-004`
+- `active_slice`: Execution Enrichment and Unified XES
+- `implementation_status`: `CDLGW-003` complete; `CDLGW-004` TDD planning pending
 - `canonical_design`: [wrapper-design.md](wrapper-design.md)
 - `implementation_source_plan`: [2026-08-14-cdlg-wrapper-mvp.md](superpowers/plans/2026-08-14-cdlg-wrapper-mvp.md)
 
@@ -26,7 +26,7 @@ acceptance scenarios have independent evidence and closure verification.
 | --- | --- | --- | --- | --- | --- |
 | `CDLGW-001` | Bootstrap and Configuration Contract | complete | Tasks 1-2 | Approved Canon | [Closure evidence](../outputs/worklogs/2026-08-14-2152-REPORT-CDLGW-001-bootstrap-configuration-contract.md) covers all acceptance scenarios. |
 | `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | complete | Task 3 | `CDLGW-001` | [Closure evidence](../outputs/worklogs/2026-08-14-2225-REPORT-CDLGW-002-external-cdlg-runner.md) covers all acceptance scenarios. |
-| `CDLGW-003` | Version Reconstruction and Structure Artifacts | in-progress | Tasks 4-5 | `CDLGW-002` | TDD planning pending; requires raw CDLG artifact contract. |
+| `CDLGW-003` | Version Reconstruction and Structure Artifacts | complete | Tasks 4-5 | `CDLGW-002` | [Corrected closure evidence](../outputs/worklogs/2026-08-14-2309-REPORT-CDLGW-003-contract-correction.md) covers all acceptance scenarios against the real CDLG artifact contract. |
 | `CDLGW-004` | Execution Enrichment and Unified XES | planned | Tasks 6-7 | `CDLGW-003` | Versioned lifecycle/resource/timestamp XES and evidence bundle satisfy the XES contract. |
 | `CDLGW-005` | Validation, Publication, and CLI | planned | Tasks 8-9 | `CDLGW-004` | CLI publishes only strictly validated dataset bundles and preserves failed-run diagnostics. |
 | `CDLGW-006` | End-to-End and bpm_prediction Compatibility | planned | Task 10 | `CDLGW-005` | Real CDLG run and separate downstream compatibility smoke test pass. |
@@ -78,7 +78,12 @@ is `complete`; closure verification is recorded in the linked report.
 | `CDLGW-003-AC01` | P0 | Given raw CDLG XES and drift metadata, when parsed, then every retained trace belongs to one ordered version and surplus traces are recorded without altering raw provenance. | `pytest tests/test_cdlg_metadata.py tests/test_annotate_versions.py -v` | RED/GREEN tasks; `CDLGW-003-EV01`. |
 | `CDLGW-003-AC02` | P0 | Given recovered process trees, when structures export, then each version has one parseable PTML, BPMN, and deterministic catalog row with valid IDs/references. | `pytest tests/test_structure.py -v` | RED/GREEN tasks; `CDLGW-003-EV02`. |
 
-**TDD proposal:** [2026-08-14-cdlgw-003-tdd-plan.md](superpowers/plans/2026-08-14-cdlgw-003-tdd-plan.md). Implementation awaits explicit approval.
+**Implementation evidence:** `CDLGW-003-EV01` is produced by
+`pytest tests/test_cdlg_metadata.py tests/test_annotate_versions.py -v`;
+`CDLGW-003-EV02` is produced by `pytest tests/test_structure.py -v`;
+`CDLGW-003-EV03` is produced by the full repository pytest command; and
+`CDLGW-003-EV04` is produced by compile/diff/closure verification. Status is
+`complete`; corrected closure verification is recorded in the linked report.
 
 **Forbidden scope:** artificial event scheduling, resources, or downstream runtime integration.
 
