@@ -1,0 +1,27 @@
+# External GPL-3.0 upstream checkout
+/CDLG/
+
+# Benchmark runtime environments
+/.venv/
+/.venv-*/
+/venv/
+/env/
+
+# IDE and Python caches
+/.idea/
+/.vscode/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated and temporary benchmark artifacts
+/outputs/
+/work/
+/tmp/
+*.log
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
