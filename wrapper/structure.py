@@ -79,7 +79,7 @@ def export_structures(
 
 def _export_ptml(process_tree: str, path: Path) -> None:
     try:
-        tree = parse_process_tree(process_tree)
+        tree = parse_process_tree(_pm4py_process_tree(process_tree))
         ptml_exporter.apply(tree, str(path))
     except Exception as error:
         raise ArtifactError(f"process_tree cannot be exported to PTML: {process_tree}") from error
@@ -87,7 +87,7 @@ def _export_ptml(process_tree: str, path: Path) -> None:
 
 def _export_bpmn(process_tree: str, root_node: TreeNode, path: Path) -> dict[str, str]:
     try:
-        tree = parse_process_tree(process_tree)
+        tree = parse_process_tree(_pm4py_process_tree(process_tree))
         bpmn_graph = process_tree_converter.apply(tree, variant=process_tree_converter.Variants.TO_BPMN)
         bpmn_exporter.apply(bpmn_graph, str(path))
     except Exception as error:
@@ -99,15 +99,24 @@ def _write_catalog(path: Path, artifacts: list[StructureArtifact]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=["process_key", "proc_def_id", "version", "bpmn_path"],
+            fieldnames=[
+                "proc_def_id",
+                "proc_def_key",
+                "version",
+                "tenant_id",
+                "deployment_id",
+                "bpmn_path",
+            ],
         )
         writer.writeheader()
         for artifact in artifacts:
             writer.writerow(
                 {
-                    "process_key": f"cdlg_{artifact.version_id}",
                     "proc_def_id": f"cdlg_{artifact.version_id}",
+                    "proc_def_key": "cdlg_dataset",
                     "version": artifact.version_id,
+                    "tenant_id": "",
+                    "deployment_id": f"cdlg_deployment_{artifact.version_id}",
                     "bpmn_path": f"models/bpmn/{artifact.version_id}.bpmn",
                 }
             )
@@ -263,7 +272,7 @@ def _gateway_role(process: ET.Element, gateway_id: str) -> str:
 def _gateway_signatures(root_node: TreeNode) -> dict[tuple[str, str], tuple[str, ...]]:
     signatures: dict[tuple[str, str], list[str]] = {}
     for node in _operator_nodes(root_node):
-        if node.operator == "->":
+        if node.operator in {"->", "tau"}:
             continue
         kind = _gateway_kind(node.operator)
         signature = _canonical_signature(node)
@@ -273,6 +282,8 @@ def _gateway_signatures(root_node: TreeNode) -> dict[tuple[str, str], tuple[str,
 
 
 def _operator_nodes(node: TreeNode) -> list[TreeNode]:
+    if node.operator == "tau":
+        return []
     nodes = [] if node.label is not None else [node]
     for child in node.children:
         nodes.extend(_operator_nodes(child))
@@ -292,6 +303,8 @@ def _local_name(tag: str) -> str:
 
 
 def _canonical_signature(node: TreeNode) -> str:
+    if node.operator == "tau":
+        return "tau"
     if node.label is not None:
         return repr(node.label)
     child_signatures = ",".join(_canonical_signature(child) for child in node.children)
@@ -316,6 +329,8 @@ def _task_id(label: str) -> str:
 
 
 def _visible_labels(node: TreeNode) -> list[str]:
+    if node.operator == "tau":
+        return []
     if node.label is not None:
         return [node.label]
     labels: list[str] = []
@@ -331,6 +346,10 @@ def _parse_tree_string(value: str) -> TreeNode:
     return node
 
 
+def _pm4py_process_tree(value: str) -> str:
+    return value.replace("*tau*", "tau")
+
+
 class _TreeParser:
     def __init__(self, value: str) -> None:
         self.value = value
@@ -338,6 +357,9 @@ class _TreeParser:
 
     def parse_node(self) -> TreeNode:
         self._skip_ws()
+        if self.value.startswith("*tau*", self.index):
+            self.index += len("*tau*")
+            return TreeNode(operator="tau", label=None)
         if self._peek() == "'":
             return TreeNode(operator=None, label=self._parse_label())
         operator = self._parse_operator()

@@ -98,9 +98,13 @@ The non-interactive wrapper entry point is:
 
 The CLI loads and validates the YAML configuration, delegates to the generation
 pipeline, prints the published dataset path on success, and maps expected
-wrapper failures to the documented non-zero exit codes. The strict bundle
-validator and safe publication layer are implemented; the real pinned-CDLG
-end-to-end compatibility run remains the `CDLGW-006` integration slice.
+wrapper failures to the documented non-zero exit codes. The generation pipeline
+now runs the pinned external CDLG checkout, reconstructs versions from real flat
+`drift_info.csv`, writes unified and optional per-version XES, exports BPMN/PTML
+artifacts, writes downstream `bpm_prediction` configs, validates the bundle, and
+publishes it atomically. Every published bundle includes `logs/run.log`,
+`reports/drift_metrics.json`, and the raw `raw/drift_info.csv` evidence used for
+version reconstruction.
 
 ## Status
 
@@ -108,9 +112,9 @@ The first-experiment architecture and specification are approved. The wrapper
 currently includes the configuration contract, external CDLG runner layer,
 version reconstruction, in-memory version annotation, deterministic BPMN/PTML
 structure export, lifecycle/resource/time enrichment, unified XES assembly,
-draft evidence writing, strict bundle validation, safe publication, and the
-non-interactive CLI surface. The remaining planned slice is end-to-end
-compatibility work.
+draft evidence writing, strict bundle validation, safe publication, the
+non-interactive CLI surface, real pinned-CDLG smoke coverage, and subprocess-only
+`bpm_prediction` XES/BPMN ingestion compatibility coverage.
 
 ## License
 

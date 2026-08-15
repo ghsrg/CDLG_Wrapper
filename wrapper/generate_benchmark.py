@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Callable
 
 from wrapper.config import ResolvedConfig, load_config
-from wrapper.errors import CdlgExecutionError, exit_code_for
+from wrapper.errors import exit_code_for
+from wrapper.orchestrator import run_generation_pipeline as orchestrate_generation
 
 
 Pipeline = Callable[[Path, ResolvedConfig], Path]
@@ -33,9 +34,7 @@ def main(argv: list[str] | None = None, *, pipeline: Pipeline | None = None) -> 
 
 
 def run_generation_pipeline(config_path: Path, resolved_config: ResolvedConfig) -> Path:
-    raise CdlgExecutionError(
-        "end-to-end external CDLG generation is reserved for CDLGW-006 compatibility execution"
-    )
+    return orchestrate_generation(config_path, resolved_config, project_root=Path.cwd())
 
 
 def _parser() -> argparse.ArgumentParser:

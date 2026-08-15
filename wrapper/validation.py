@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pm4py.objects.bpmn.importer import importer as bpmn_importer
 from pm4py.objects.process_tree.importer import importer as ptml_importer
 
@@ -62,6 +63,7 @@ def validate_bundle(bundle_dir: Path, resolved_config: Any) -> ValidationReport:
     _require_files(bundle_dir, expected_version_ids, errors)
     manifest = _validate_manifest(bundle_dir, errors)
     _validate_checksums(bundle_dir, errors)
+    _validate_downstream_reports_and_configs(bundle_dir, errors)
 
     trace_count, version_counts, intervals, activities_by_version = _validate_xes(
         dataset_path,
@@ -109,9 +111,12 @@ def _require_files(bundle_dir: Path, expected_version_ids: tuple[str, ...], erro
         "configs/bpm_prediction_xes.yaml",
         "configs/bpm_prediction_bpmn.yaml",
         "raw/cdlg_output.xes",
+        "raw/drift_info.csv",
         "raw/cdlg_parameters.txt",
+        "logs/run.log",
         "logs/cdlg_stdout.log",
         "logs/cdlg_stderr.log",
+        "reports/drift_metrics.json",
         "reports/processing.json",
         "reports/methodology.md",
         "reports/validation.json",
@@ -301,7 +306,8 @@ def _validate_structures(
         if bpmn_path.is_file():
             task_names = _validate_bpmn(bpmn_path, errors)
             xes_names = activities_by_version.get(version_id, set())
-            if task_names != xes_names:
+            missing_in_bpmn = xes_names - task_names
+            if missing_in_bpmn:
                 errors.append(
                     f"BPMN/XES activity alignment mismatch for {version_id}: "
                     f"BPMN={sorted(task_names)} XES={sorted(xes_names)}"
@@ -319,11 +325,81 @@ def _validate_catalog(catalog_path: Path, expected_version_ids: tuple[str, ...],
     if versions != list(expected_version_ids):
         errors.append(f"process_definitions.csv versions {versions} do not match expected {list(expected_version_ids)}")
     for row in rows:
+        for field in ("proc_def_id", "proc_def_key", "version", "deployment_id", "bpmn_path"):
+            if field not in row:
+                errors.append(f"process_definitions.csv missing column: {field}")
         bpmn_path = row.get("bpmn_path", "")
         if Path(bpmn_path).is_absolute() or ".." in Path(bpmn_path).parts:
             errors.append(f"process_definitions.csv bpmn_path must be relative: {bpmn_path}")
         elif bpmn_path and not (catalog_path.parents[1] / bpmn_path).is_file():
             errors.append(f"process_definitions.csv bpmn_path is missing: {bpmn_path}")
+
+
+def _validate_downstream_reports_and_configs(bundle_dir: Path, errors: list[str]) -> None:
+    validation_report = _read_json(bundle_dir / "reports/validation.json", errors)
+    if validation_report is not None and validation_report.get("status") != "passed":
+        errors.append("reports/validation.json status must be passed")
+
+    topology_report = _read_json(bundle_dir / "reports/topology_alignment.json", errors)
+    if topology_report is not None and topology_report.get("status") != "passed":
+        errors.append("reports/topology_alignment.json status must be passed")
+
+    xes_config = _read_yaml(bundle_dir / "configs/bpm_prediction_xes.yaml", errors)
+    if xes_config is not None:
+        if _get(xes_config, ("mapping", "adapter")) != "xes":
+            errors.append("configs/bpm_prediction_xes.yaml mapping.adapter must be xes")
+        if _get(xes_config, ("data", "log_path")) != "dataset.xes":
+            errors.append("configs/bpm_prediction_xes.yaml data.log_path must be dataset.xes")
+        if _get(xes_config, ("mapping", "xes_adapter", "version_key")) != "concept:version":
+            errors.append("configs/bpm_prediction_xes.yaml xes_adapter.version_key must be concept:version")
+        if _get(xes_config, ("mapping", "xes_adapter", "lifecycle_key")) != "lifecycle:transition":
+            errors.append("configs/bpm_prediction_xes.yaml xes_adapter.lifecycle_key must be lifecycle:transition")
+
+    bpmn_config = _read_yaml(bundle_dir / "configs/bpm_prediction_bpmn.yaml", errors)
+    if bpmn_config is not None:
+        if _get(bpmn_config, ("mapping", "adapter")) != "camunda":
+            errors.append("configs/bpm_prediction_bpmn.yaml mapping.adapter must be camunda")
+        if _get(bpmn_config, ("mapping", "camunda_adapter", "structure", "source")) != "bpmn":
+            errors.append("configs/bpm_prediction_bpmn.yaml camunda structure.source must be bpmn")
+        catalog_file = _get(
+            bpmn_config,
+            ("mapping", "camunda_adapter", "structure", "files", "catalog_file"),
+        )
+        if catalog_file != "models/process_definitions.csv":
+            errors.append("configs/bpm_prediction_bpmn.yaml catalog_file must be models/process_definitions.csv")
+
+
+def _read_json(path: Path, errors: list[str]) -> dict[str, Any] | None:
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        errors.append(f"{path.name} cannot be read: {error}")
+        return None
+    if not isinstance(loaded, dict):
+        errors.append(f"{path.name} must be a JSON object")
+        return None
+    return loaded
+
+
+def _read_yaml(path: Path, errors: list[str]) -> dict[str, Any] | None:
+    try:
+        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as error:
+        errors.append(f"{path.name} cannot be read: {error}")
+        return None
+    if not isinstance(loaded, dict):
+        errors.append(f"{path.name} must be a YAML mapping")
+        return None
+    return loaded
+
+
+def _get(payload: dict[str, Any], path: tuple[str, ...]) -> Any:
+    current: Any = payload
+    for key in path:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+    return current
 
 
 def _validate_bpmn(bpmn_path: Path, errors: list[str]) -> set[str]:

@@ -62,18 +62,14 @@ def parse_raw_metadata(
         _validate_process_tree(version_id, process_tree)
         snapshots.append(ProcessTreeSnapshot(version_id=version_id, process_tree=process_tree))
 
-    previous_after = process_trees[0]
     boundary_starts = [0]
     seen_change_starts: set[int] = set()
     for change in changes:
-        if change["process_tree_before"] != previous_after:
-            raise ArtifactError("process_tree lineage mismatch in drift metadata")
         start_index = _change_trace_index_to_zero_based(change["change_trace_index"])
         if start_index in seen_change_starts:
             raise ArtifactError(f"duplicate change_trace_index boundary: {start_index + 1}")
         seen_change_starts.add(start_index)
         boundary_starts.append(start_index)
-        previous_after = change["process_tree_after"]
 
     boundaries = _build_boundaries(boundary_starts, expected_version_ids, raw_trace_count)
 

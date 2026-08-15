@@ -33,15 +33,19 @@ def test_given_snapshots_when_structures_exported_then_artifact_pairs_and_catalo
 
     assert _catalog_rows(first.catalog_path) == [
         {
-            "process_key": "cdlg_v1",
             "proc_def_id": "cdlg_v1",
+            "proc_def_key": "cdlg_dataset",
             "version": "v1",
+            "tenant_id": "",
+            "deployment_id": "cdlg_deployment_v1",
             "bpmn_path": "models/bpmn/v1.bpmn",
         },
         {
-            "process_key": "cdlg_v2",
             "proc_def_id": "cdlg_v2",
+            "proc_def_key": "cdlg_dataset",
             "version": "v2",
+            "tenant_id": "",
+            "deployment_id": "cdlg_deployment_v2",
             "bpmn_path": "models/bpmn/v2.bpmn",
         },
     ]
@@ -135,6 +139,15 @@ def test_given_snapshot_when_exporting_bpmn_then_pm4py_process_tree_conversion_i
 
     assert calls == {"convert": 1, "export": 1}
     assert len(_element_ids(tmp_path / "models/bpmn/v1.bpmn", "exclusiveGateway")) == 2
+
+
+def test_given_invisible_tau_in_process_tree_when_structures_exported_then_tau_is_not_a_visible_activity(tmp_path):
+    result = export_structures(
+        snapshots=(ProcessTreeSnapshot(version_id="v1", process_tree="->('A',*tau*)"),),
+        output_root=tmp_path,
+    )
+
+    assert set(_task_ids_by_name(result.artifacts[0].bpmn_path)) == {"A"}
 
 
 def test_given_duplicate_visible_labels_when_structures_exported_then_alignment_error(tmp_path):

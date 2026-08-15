@@ -94,17 +94,29 @@ def enrich_traces(
             current_arrival += timedelta(seconds=random_source.expovariate(config.temporal.arrival_rate))
         version_activation_times.setdefault(version_id, current_arrival)
         labels = _activity_labels(trace)
-        _validate_trace(labels, trees[version_id], version_id)
-        instances = _schedule_trace(
-            labels=labels,
-            version_id=version_id,
-            case_id=f"case_{trace_index:06d}",
-            root=trees[version_id],
-            arrival_at=current_arrival,
-            config=config,
-            resource_states=resource_states,
-            rng=random_source,
-        )
+        try:
+            _validate_trace(labels, trees[version_id], version_id)
+            instances = _schedule_trace(
+                labels=labels,
+                version_id=version_id,
+                case_id=f"case_{trace_index:06d}",
+                root=trees[version_id],
+                arrival_at=current_arrival,
+                config=config,
+                resource_states=resource_states,
+                rng=random_source,
+            )
+        except ArtifactError:
+            _validate_trace_labels_known(labels, trees[version_id], version_id)
+            instances = _schedule_observed_order_trace(
+                labels=labels,
+                version_id=version_id,
+                case_id=f"case_{trace_index:06d}",
+                arrival_at=current_arrival,
+                config=config,
+                resource_states=resource_states,
+                rng=random_source,
+            )
         complete_at = max((item.complete_at for item in instances), default=current_arrival)
         enriched_traces.append(
             EnrichedTrace(
@@ -155,6 +167,35 @@ def _schedule_trace(
     return instances
 
 
+def _schedule_observed_order_trace(
+    *,
+    labels: tuple[str, ...],
+    version_id: str,
+    case_id: str,
+    arrival_at: datetime,
+    config: EnrichmentConfig,
+    resource_states: dict[str, list[_ResourceState]],
+    rng: Random,
+) -> list[EnrichedActivityInstance]:
+    occurrence_counts: Counter[str] = Counter()
+    instances: list[EnrichedActivityInstance] = []
+    next_start = arrival_at
+    for activity in labels:
+        instance = _schedule_activity(
+            activity=activity,
+            version_id=version_id,
+            case_id=case_id,
+            earliest_start=next_start,
+            config=config,
+            resource_states=resource_states,
+            occurrence_counts=occurrence_counts,
+            rng=rng,
+        )
+        instances.append(instance)
+        next_start = instance.complete_at
+    return instances
+
+
 def _schedule_node(
     *,
     root: TreeNode,
@@ -168,6 +209,9 @@ def _schedule_node(
     occurrence_counts: Counter[str],
     rng: Random,
 ) -> tuple[list[EnrichedActivityInstance], int, datetime]:
+    if root.operator == "tau":
+        return [], position, earliest_start
+
     if root.label is not None:
         if position >= len(labels) or labels[position] != root.label:
             raise ArtifactError(f"trace cannot be replayed against {version_id}")
@@ -384,6 +428,12 @@ def _validate_trace(labels: tuple[str, ...], root: TreeNode, version_id: str) ->
     if root.operator in {"X", "+"} and Counter(_visible_labels(root)) != Counter(labels):
         if root.operator == "X" and any(tuple(_visible_labels(child)) == labels for child in root.children):
             return
+        raise ArtifactError(f"trace cannot be replayed against {version_id}")
+
+
+def _validate_trace_labels_known(labels: tuple[str, ...], root: TreeNode, version_id: str) -> None:
+    allowed = set(_visible_labels(root))
+    if not labels or any(label not in allowed for label in labels):
         raise ArtifactError(f"trace cannot be replayed against {version_id}")
 
 

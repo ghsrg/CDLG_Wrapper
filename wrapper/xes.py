@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 from pathlib import Path
 
 from pm4py.objects.log.exporter.xes import exporter as xes_exporter
@@ -22,7 +24,7 @@ def assemble_xes(enriched_log: EnrichedLog) -> EventLog:
 
 def write_xes(log: EventLog, path: Path, *, per_version_debug_dir: Path | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    xes_exporter.apply(log, str(path))
+    _export_xes_silently(log, path)
     if per_version_debug_dir is not None:
         _write_per_version_debug_xes(log, per_version_debug_dir)
 
@@ -37,7 +39,12 @@ def _write_per_version_debug_xes(log: EventLog, debug_dir: Path) -> None:
         version_log.attributes["concept:name"] = f"{log.attributes.get('concept:name', 'dataset')}_{version_id}"
         version_log.append(trace)
     for version_id, version_log in sorted(version_logs.items()):
-        xes_exporter.apply(version_log, str(debug_dir / f"{version_id}.xes"))
+        _export_xes_silently(version_log, debug_dir / f"{version_id}.xes")
+
+
+def _export_xes_silently(log: EventLog, path: Path) -> None:
+    with contextlib.redirect_stderr(io.StringIO()):
+        xes_exporter.apply(log, str(path))
 
 
 def _assemble_trace(enriched_trace: EnrichedTrace) -> Trace:

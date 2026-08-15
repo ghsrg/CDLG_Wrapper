@@ -1,0 +1,21 @@
+dataset:
+  total_traces: 9
+  version_count: 3
+cdlg:
+  process_tree_complexity: simple
+  evolution_proportion: 0.2
+  drift_type: sudden
+  noise_enabled: false
+  checkout_path: CDLG
+  python_executable: .venv/Scripts/python.exe
+lifecycle:
+  assign_enabled: false
+resources:
+  pool_size: 3
+temporal:
+  arrival_rate: 1.0
+  duration_mu: -2.0
+  duration_sigma: 0.1
+  epoch: "2026-01-01T00:00:00Z"
+output:
+  export_per_version_xes: true

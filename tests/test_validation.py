@@ -38,13 +38,20 @@ def test_given_valid_bundle_when_validated_then_report_is_returned(tmp_path):
     [
         ("missing_bpmn", "missing BPMN"),
         ("missing_raw_xes", "missing required artifact: raw/cdlg_output.xes"),
+        ("missing_raw_drift_info", "missing required artifact: raw/drift_info.csv"),
         ("missing_raw_parameters", "missing required artifact: raw/cdlg_parameters.txt"),
+        ("missing_run_log", "missing required artifact: logs/run.log"),
         ("missing_cdlg_stdout", "missing required artifact: logs/cdlg_stdout.log"),
         ("missing_cdlg_stderr", "missing required artifact: logs/cdlg_stderr.log"),
+        ("missing_drift_metrics", "missing required artifact: reports/drift_metrics.json"),
         ("missing_validation_report", "missing required artifact: reports/validation.json"),
         ("missing_topology_alignment_report", "missing required artifact: reports/topology_alignment.json"),
         ("missing_downstream_xes_config", "missing required artifact: configs/bpm_prediction_xes.yaml"),
         ("missing_downstream_bpmn_config", "missing required artifact: configs/bpm_prediction_bpmn.yaml"),
+        ("failed_validation_report", "reports/validation.json status must be passed"),
+        ("failed_topology_alignment_report", "reports/topology_alignment.json status must be passed"),
+        ("invalid_downstream_xes_adapter", "configs/bpm_prediction_xes.yaml mapping.adapter must be xes"),
+        ("invalid_downstream_bpmn_catalog", "configs/bpm_prediction_bpmn.yaml catalog_file must be models/process_definitions.csv"),
         ("wrong_trace_count", "trace count"),
         ("missing_event_version", "event missing concept:version"),
         ("invalid_lifecycle_pair", "lifecycle pair must have one start and one complete"),
@@ -145,8 +152,14 @@ def _corrupt_bundle(bundle: Path, corrupt: str) -> None:
     elif corrupt == "missing_raw_xes":
         (bundle / "raw/cdlg_output.xes").unlink()
         _rewrite_checksums_for(bundle)
+    elif corrupt == "missing_raw_drift_info":
+        (bundle / "raw/drift_info.csv").unlink()
+        _rewrite_checksums_for(bundle)
     elif corrupt == "missing_raw_parameters":
         (bundle / "raw/cdlg_parameters.txt").unlink()
+        _rewrite_checksums_for(bundle)
+    elif corrupt == "missing_run_log":
+        (bundle / "logs/run.log").unlink()
         _rewrite_checksums_for(bundle)
     elif corrupt == "missing_cdlg_stdout":
         (bundle / "logs/cdlg_stdout.log").unlink()
@@ -160,11 +173,32 @@ def _corrupt_bundle(bundle: Path, corrupt: str) -> None:
     elif corrupt == "missing_topology_alignment_report":
         (bundle / "reports/topology_alignment.json").unlink()
         _rewrite_checksums_for(bundle)
+    elif corrupt == "missing_drift_metrics":
+        (bundle / "reports/drift_metrics.json").unlink()
+        _rewrite_checksums_for(bundle)
     elif corrupt == "missing_downstream_xes_config":
         (bundle / "configs/bpm_prediction_xes.yaml").unlink()
         _rewrite_checksums_for(bundle)
     elif corrupt == "missing_downstream_bpmn_config":
         (bundle / "configs/bpm_prediction_bpmn.yaml").unlink()
+        _rewrite_checksums_for(bundle)
+    elif corrupt == "failed_validation_report":
+        (bundle / "reports/validation.json").write_text('{"status": "failed"}\n', encoding="utf-8")
+        _rewrite_checksums_for(bundle)
+    elif corrupt == "failed_topology_alignment_report":
+        (bundle / "reports/topology_alignment.json").write_text('{"status": "failed"}\n', encoding="utf-8")
+        _rewrite_checksums_for(bundle)
+    elif corrupt == "invalid_downstream_xes_adapter":
+        (bundle / "configs/bpm_prediction_xes.yaml").write_text(
+            "data:\n  log_path: dataset.xes\nmapping:\n  adapter: csv\n",
+            encoding="utf-8",
+        )
+        _rewrite_checksums_for(bundle)
+    elif corrupt == "invalid_downstream_bpmn_catalog":
+        (bundle / "configs/bpm_prediction_bpmn.yaml").write_text(
+            "mapping:\n  adapter: camunda\n  camunda_adapter:\n    structure:\n      files:\n        catalog_file: other.csv\n",
+            encoding="utf-8",
+        )
         _rewrite_checksums_for(bundle)
     elif corrupt == "wrong_trace_count":
         _remove_last_trace(bundle / "dataset.xes")
@@ -248,9 +282,12 @@ def _write_xml(root: ET.Element, path: Path) -> None:
 def _write_required_contract_artifacts(bundle: Path) -> tuple[Path, ...]:
     paths = (
         bundle / "raw/cdlg_output.xes",
+        bundle / "raw/drift_info.csv",
         bundle / "raw/cdlg_parameters.txt",
+        bundle / "logs/run.log",
         bundle / "logs/cdlg_stdout.log",
         bundle / "logs/cdlg_stderr.log",
+        bundle / "reports/drift_metrics.json",
         bundle / "reports/validation.json",
         bundle / "reports/topology_alignment.json",
         bundle / "configs/bpm_prediction_xes.yaml",
@@ -259,14 +296,45 @@ def _write_required_contract_artifacts(bundle: Path) -> tuple[Path, ...]:
     for path in paths:
         path.parent.mkdir(parents=True, exist_ok=True)
     (bundle / "raw/cdlg_output.xes").write_text("<log />\n", encoding="utf-8")
+    (bundle / "raw/drift_info.csv").write_text(
+        "log_name;drift_or_noise_id;drift_attribute;drift_sub_attribute;value\n",
+        encoding="utf-8",
+    )
     (bundle / "raw/cdlg_parameters.txt").write_text("Number_event_logs: 1\n", encoding="utf-8")
+    (bundle / "logs/run.log").write_text("initialize\tpassed\tOrchestrator\n", encoding="utf-8")
     (bundle / "logs/cdlg_stdout.log").write_text("stdout\n", encoding="utf-8")
     (bundle / "logs/cdlg_stderr.log").write_text("", encoding="utf-8")
+    (bundle / "reports/drift_metrics.json").write_text('{"status": "passed"}\n', encoding="utf-8")
     (bundle / "reports/validation.json").write_text('{"status": "passed"}\n', encoding="utf-8")
     (bundle / "reports/topology_alignment.json").write_text('{"status": "passed"}\n', encoding="utf-8")
-    (bundle / "configs/bpm_prediction_xes.yaml").write_text("xes:\n  lifecycle: complete\n", encoding="utf-8")
+    (bundle / "configs/bpm_prediction_xes.yaml").write_text(
+        "\n".join(
+            [
+                "data:",
+                "  log_path: dataset.xes",
+                "mapping:",
+                "  adapter: xes",
+                "  xes_adapter:",
+                "    version_key: concept:version",
+                "    lifecycle_key: lifecycle:transition",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
     (bundle / "configs/bpm_prediction_bpmn.yaml").write_text(
-        "gateway_mode: collapse_for_prediction\n",
+        "\n".join(
+            [
+                "mapping:",
+                "  adapter: camunda",
+                "  camunda_adapter:",
+                "    structure:",
+                "      source: bpmn",
+                "      files:",
+                "        catalog_file: models/process_definitions.csv",
+                "",
+            ]
+        ),
         encoding="utf-8",
     )
     return paths

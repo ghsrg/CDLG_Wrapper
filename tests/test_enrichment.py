@@ -3,10 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from random import Random
 
+import pytest
+
 from wrapper.annotate_versions import AnnotatedEvent, AnnotatedTrace
 from wrapper.cdlg_metadata import ProcessTreeSnapshot
 from wrapper.config import LifecycleConfig, ResourceConfig, TemporalConfig
 from wrapper.enrichment import EnrichmentConfig, enrich_traces
+from wrapper.errors import ArtifactError
 
 
 def test_given_enriched_trace_when_inspected_then_lifecycle_pairs_share_instance_and_resource():
@@ -92,6 +95,27 @@ def test_given_later_version_activates_before_prior_case_completes_then_carryove
 
     assert enriched.version_activation_times["v1"] <= enriched.version_activation_times["v2"]
     assert enriched.carryover_summary["plus_1"] == 1
+
+
+def test_given_real_cdlg_order_not_replayable_but_labels_known_when_enriched_then_observed_order_is_scheduled():
+    enriched = enrich_traces(
+        traces=(_trace("v1", 0, ("A", "C", "B")),),
+        snapshots=(ProcessTreeSnapshot(version_id="v1", process_tree="->('A','B','C')"),),
+        config=_config(pool_size=1, duration_mu=-2.0, duration_sigma=0.0),
+        rng=Random(11),
+    )
+
+    assert [instance.activity for instance in enriched.traces[0].instances] == ["A", "C", "B"]
+
+
+def test_given_real_cdlg_order_with_unknown_label_when_enriched_then_artifact_error_is_raised():
+    with pytest.raises(ArtifactError, match="trace cannot be replayed"):
+        enrich_traces(
+            traces=(_trace("v1", 0, ("A", "Z")),),
+            snapshots=(ProcessTreeSnapshot(version_id="v1", process_tree="->('A','B')"),),
+            config=_config(),
+            rng=Random(11),
+        )
 
 
 def _trace(version_id: str, source_index: int, activities: tuple[str, ...]) -> AnnotatedTrace:

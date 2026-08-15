@@ -12,7 +12,12 @@ from wrapper.annotate_versions import AnnotatedEvent, AnnotatedTrace
 from wrapper.cdlg_metadata import ProcessTreeSnapshot
 from wrapper.config import LifecycleConfig, ResourceConfig, TemporalConfig
 from wrapper.enrichment import EnrichmentConfig, enrich_traces
-from wrapper.evidence import ChecksumMismatchError, verify_checksums, write_draft_evidence
+from wrapper.evidence import (
+    ChecksumMismatchError,
+    verify_checksums,
+    write_draft_evidence,
+    write_downstream_compatibility_artifacts,
+)
 from wrapper.xes import assemble_xes, write_xes
 
 
@@ -68,6 +73,42 @@ def test_given_artifact_changes_after_checksum_when_verified_then_mismatch_is_re
 
     with pytest.raises(ChecksumMismatchError):
         verify_checksums(result.checksum_path)
+
+
+def test_given_bundle_context_when_downstream_artifacts_written_then_configs_and_reports_are_compatible(tmp_path):
+    paths = write_downstream_compatibility_artifacts(
+        staging_dir=tmp_path,
+        dataset_name="cdlg_dataset",
+        version_ids=("v1", "v2"),
+        trace_count=4,
+        version_counts={"v1": 2, "v2": 2},
+        topology_alignment={
+            "v1": {"bpmn_activities": ["A"], "xes_activities": ["A"]},
+            "v2": {"bpmn_activities": ["B"], "xes_activities": ["B"]},
+        },
+    )
+
+    assert {path.relative_to(tmp_path).as_posix() for path in paths} == {
+        "configs/bpm_prediction_xes.yaml",
+        "configs/bpm_prediction_bpmn.yaml",
+        "reports/validation.json",
+        "reports/topology_alignment.json",
+    }
+
+    xes_config = yaml.safe_load((tmp_path / "configs/bpm_prediction_xes.yaml").read_text(encoding="utf-8"))
+    bpmn_config = yaml.safe_load((tmp_path / "configs/bpm_prediction_bpmn.yaml").read_text(encoding="utf-8"))
+    validation = json.loads((tmp_path / "reports/validation.json").read_text(encoding="utf-8"))
+    topology = json.loads((tmp_path / "reports/topology_alignment.json").read_text(encoding="utf-8"))
+
+    assert xes_config["data"]["log_path"] == "dataset.xes"
+    assert xes_config["mapping"]["adapter"] == "xes"
+    assert xes_config["mapping"]["xes_adapter"]["version_key"] == "concept:version"
+    assert bpmn_config["mapping"]["adapter"] == "camunda"
+    assert bpmn_config["mapping"]["camunda_adapter"]["structure"]["files"]["catalog_file"] == "models/process_definitions.csv"
+    assert validation["status"] == "passed"
+    assert validation["trace_count"] == 4
+    assert topology["status"] == "passed"
+    assert topology["versions"]["v1"]["missing_in_bpmn"] == []
 
 
 def _enriched():

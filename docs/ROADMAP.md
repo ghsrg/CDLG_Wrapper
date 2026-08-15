@@ -2,9 +2,9 @@
 
 ## Delivery Status
 
-- `active_plan_id`: `CDLGW-006`
-- `active_slice`: End-to-End and bpm_prediction Compatibility
-- `implementation_status`: `CDLGW-005` complete; `CDLGW-006` planned
+- `active_plan_id`: none
+- `active_slice`: none
+- `implementation_status`: `CDLGW-006` complete; no active implementation slice
 - `canonical_design`: [wrapper-design.md](wrapper-design.md)
 - `implementation_source_plan`: [2026-08-14-cdlg-wrapper-mvp.md](superpowers/plans/2026-08-14-cdlg-wrapper-mvp.md)
 
@@ -29,7 +29,7 @@ acceptance scenarios have independent evidence and closure verification.
 | `CDLGW-003` | Version Reconstruction and Structure Artifacts | complete | Tasks 4-5 | `CDLGW-002` | [Corrected closure evidence](../outputs/worklogs/2026-08-14-2309-REPORT-CDLGW-003-contract-correction.md) covers all acceptance scenarios against the real CDLG artifact contract. |
 | `CDLGW-004` | Execution Enrichment and Unified XES | complete | Tasks 6-7 | `CDLGW-003` | [Closure evidence](../outputs/worklogs/2026-08-14-2358-REPORT-CDLGW-004-execution-enrichment-unified-xes.md) covers lifecycle/resource/time enrichment, unified XES assembly, and draft evidence writing. |
 | `CDLGW-005` | Validation, Publication, and CLI | complete | Tasks 8-9 | `CDLGW-004` | [Closure evidence](../outputs/worklogs/2026-08-15-1044-REPORT-CDLGW-005-validation-publication-cli.md) covers strict validation, safe publication, and CLI exit mapping. |
-| `CDLGW-006` | End-to-End and bpm_prediction Compatibility | planned | Task 10 | `CDLGW-005` | Real CDLG run and separate downstream compatibility smoke test pass. |
+| `CDLGW-006` | End-to-End and bpm_prediction Compatibility | complete | Task 10 | `CDLGW-005` | [Closure evidence](../outputs/worklogs/2026-08-15-1155-REPORT-CDLGW-006-end-to-end-bpm-prediction-compatibility.md) covers real CDLG execution, published bundle validation, downstream ingestion compatibility, failure retention, and closure checks. |
 
 ## Agent Scenario Cards
 
@@ -136,6 +136,16 @@ the linked report.
 | `CDLGW-006-AC02` | P0 | Given the generated bundle and separate `bpm_prediction` environment, when its XES/BPMN ingestion smoke test runs, then pairing, BPMN ingestion, `collapse_for_prediction`, and activity alignment succeed. | `pytest tests/test_bpm_prediction_compatibility.py -v` with the downstream interpreter | Compatibility evidence `CDLGW-006-EV02`. |
 
 **Forbidden scope:** importing `bpm_prediction` into the wrapper or making its code a wrapper dependency.
+
+**Implementation evidence:** `CDLGW-006-EV01` is produced by
+`CDLGW_RUN_REAL_CDLG=1 pytest tests/test_end_to_end.py -v -m integration`;
+`CDLGW-006-EV02` is produced by the separate-interpreter downstream
+compatibility command in `tests/test_bpm_prediction_compatibility.py` with
+`CDLGW_RUN_BPM_COMPAT=1`;
+`CDLGW-006-EV03` is produced by `pytest tests/test_orchestrator.py -v`; and
+`CDLGW-006-EV04` is produced by the full pytest, compile, import-boundary,
+diff-check, clean-CDLG, and closure verification commands. Status is
+`complete`; closure verification is recorded in the linked report.
 
 ## Deferred Themes
 

@@ -377,10 +377,12 @@ following conditions is detected:
 - a finalized artifact hash does not match `checksums.sha256` during the final
   integrity-verification phase.
 
-Use exact equality for counts and 100% coverage for required lifecycle and
-BPMN-to-XES alignment checks. Report distributional observations such as natural
-carryover and structural distances without imposing target thresholds unless a
-future experiment config explicitly defines them.
+Use exact equality for counts and 100% coverage for required lifecycle checks.
+BPMN/XES alignment is fail-fast when a generated XES activity is missing from
+that version's BPMN task set. A small smoke log is not required to execute every
+optional or exclusive BPMN activity. Report distributional observations such as
+natural carryover and structural distances without imposing target thresholds
+unless a future experiment config explicitly defines them.
 
 The CDLG repository remains standalone. Mandatory local validation must not
 import `bpm_prediction`. Generate downstream XES/BPMN configurations and a
@@ -413,12 +415,24 @@ BPMN sequence-flow references, per-version XES-to-BPMN activity alignment, and
   `drift_or_noise_id`, `drift_attribute`, `drift_sub_attribute`, and `value`.
   Treat the raw XES log-level `drift:info` attribute as provenance that should
   remain preserved with the raw XES, not as the only reconstruction source.
+- Do not require `process_tree_after` for drift `k` to equal
+  `process_tree_before` for drift `k+1`. The real CDLG flat metadata can report
+  independent `process_tree_before` values while ordered trace boundaries still
+  define generated version blocks. Reconstruct versions as the first ordered
+  `process_tree_before` plus each ordered `process_tree_after`.
 - Parse CDLG process-tree strings with the benchmark environment's PM4Py
   `parse_process_tree()` support; do not use CDLG imports for reconstruction.
+  Normalize CDLG's invisible `*tau*` token to PM4Py's `tau` spelling only at
+  the PM4Py export boundary while preserving raw metadata unchanged.
 - Produce exactly one BPMN XML artifact for each generated process version;
   therefore `N` configured versions produce `N` BPMN files.
 - Generate each BPMN artifact from the exact process tree used to simulate that
   version's traces.
+- If a real CDLG trace contains only known activities for its version but its
+  emitted event order cannot be replayed exactly against the process-tree
+  control-flow grammar, the enrichment layer may schedule the observed activity
+  order as a deterministic fallback. Unknown activities remain a validation
+  error through the BPMN/XES alignment gate.
 - Use BPMN as the primary topology source for `bpm_prediction`.
 - Retain one PTML artifact per version as the canonical process-tree audit
   representation.
@@ -583,6 +597,7 @@ The wrapper output bundle should contain:
   reports/
     processing.json
     methodology.md
+    drift_metrics.json
     validation.json
     topology_alignment.json
   logs/

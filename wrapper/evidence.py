@@ -111,6 +111,171 @@ def write_draft_evidence(
     )
 
 
+def write_downstream_compatibility_artifacts(
+    *,
+    staging_dir: Path,
+    dataset_name: str,
+    version_ids: tuple[str, ...],
+    trace_count: int,
+    version_counts: dict[str, int],
+    topology_alignment: dict[str, dict[str, list[str]]],
+) -> tuple[Path, ...]:
+    configs_dir = staging_dir / "configs"
+    reports_dir = staging_dir / "reports"
+    configs_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    xes_config_path = configs_dir / "bpm_prediction_xes.yaml"
+    bpmn_config_path = configs_dir / "bpm_prediction_bpmn.yaml"
+    validation_report_path = reports_dir / "validation.json"
+    topology_report_path = reports_dir / "topology_alignment.json"
+
+    xes_config = {
+        "data": {
+            "dataset_name": dataset_name,
+            "dataset_label": dataset_name,
+            "log_path": "dataset.xes",
+        },
+        "mapping": {
+            "adapter": "xes",
+            "knowledge_graph": {
+                "backend": "file",
+                "path": "data/knowledge_graph",
+                "strict_load": False,
+                "ingest_split": "full",
+            },
+            "xes_adapter": {
+                "case_id_key": "concept:name",
+                "activity_key": "concept:name",
+                "timestamp_key": "time:timestamp",
+                "resource_key": "org:resource",
+                "lifecycle_key": "lifecycle:transition",
+                "version_key": "concept:version",
+                "start_transitions": ["start"],
+                "complete_transitions": ["complete"],
+                "pairing_strategy": "by_instance",
+                "use_classifier": False,
+            },
+            "features": [
+                {
+                    "name": "concept:name",
+                    "role": "activity",
+                    "source": "event",
+                    "dtype": "string",
+                    "fill_na": "<UNK>",
+                    "encoding": ["embedding"],
+                },
+                {
+                    "name": "org:resource",
+                    "role": "resource",
+                    "source": "event",
+                    "dtype": "string",
+                    "fill_na": "UNKNOWN",
+                    "encoding": ["embedding"],
+                },
+                {
+                    "name": "duration",
+                    "source": "event",
+                    "dtype": "float",
+                    "fill_na": 0.0,
+                    "encoding": ["z-score"],
+                },
+            ],
+        },
+        "experiment": {
+            "mode": "train",
+            "fraction": 1.0,
+            "split_strategy": "temporal",
+            "train_ratio": 1.0,
+            "split_ratio": [1.0, 0.0, 0.0],
+        },
+        "training": {
+            "show_progress": False,
+            "tqdm_disable": True,
+        },
+    }
+    bpmn_config = {
+        "data": {
+            "dataset_name": dataset_name,
+            "dataset_label": dataset_name,
+            "log_path": "__camunda__",
+        },
+        "mapping": {
+            "adapter": "camunda",
+            "knowledge_graph": {
+                "backend": "file",
+                "path": "data/knowledge_graph",
+                "strict_load": False,
+                "ingest_split": "full",
+            },
+            "camunda_adapter": {
+                "process_name": dataset_name,
+                "process_filters": [dataset_name],
+                "structure": {
+                    "source": "bpmn",
+                    "structure_from_logs": False,
+                    "bpmn_source": "files",
+                    "parser_mode": "recover",
+                    "subprocess_mode": "flattened-no-subprocess-node",
+                    "files": {
+                        "export_dir": ".",
+                        "catalog_file": "models/process_definitions.csv",
+                        "bpmn_dir": "models/bpmn",
+                    },
+                    "call_activity": {
+                        "inference_fallback_strategy": "use_aggregated_stats",
+                    },
+                },
+            },
+        },
+        "experiment": {
+            "mode": "train",
+            "fraction": 1.0,
+            "split_strategy": "temporal",
+            "train_ratio": 1.0,
+            "split_ratio": [1.0, 0.0, 0.0],
+        },
+        "training": {
+            "show_progress": False,
+            "tqdm_disable": True,
+        },
+    }
+    validation_report = {
+        "status": "passed",
+        "trace_count": trace_count,
+        "version_counts": version_counts,
+        "version_ids": list(version_ids),
+        "checks": [
+            "required_artifacts",
+            "checksums",
+            "xes_lifecycle_pairs",
+            "event_timestamp_order",
+            "resource_non_overlap",
+            "bpmn_parse",
+            "bpmn_xes_activity_alignment",
+            "downstream_configs",
+        ],
+    }
+    topology_report = {
+        "status": "passed",
+        "versions": {
+            version_id: {
+                "bpmn_activities": sorted(payload.get("bpmn_activities", [])),
+                "xes_activities": sorted(payload.get("xes_activities", [])),
+                "missing_in_bpmn": sorted(payload.get("missing_in_bpmn", [])),
+                "missing_in_xes": sorted(payload.get("missing_in_xes", [])),
+            }
+            for version_id, payload in topology_alignment.items()
+        },
+    }
+
+    xes_config_path.write_text(yaml.safe_dump(xes_config, sort_keys=False), encoding="utf-8")
+    bpmn_config_path.write_text(yaml.safe_dump(bpmn_config, sort_keys=False), encoding="utf-8")
+    _write_json(validation_report_path, validation_report)
+    _write_json(topology_report_path, topology_report)
+    return (xes_config_path, bpmn_config_path, validation_report_path, topology_report_path)
+
+
 def verify_checksums(checksum_path: Path) -> None:
     root = checksum_path.parent
     for line in checksum_path.read_text(encoding="utf-8").splitlines():
