@@ -4,7 +4,7 @@
 
 - `active_plan_id`: `CDLGW-005`
 - `active_slice`: Validation, Publication, and CLI
-- `implementation_status`: `CDLGW-004` complete; `CDLGW-005` planned
+- `implementation_status`: `CDLGW-004` complete; `CDLGW-005` TDD proposal awaiting approval
 - `canonical_design`: [wrapper-design.md](wrapper-design.md)
 - `implementation_source_plan`: [2026-08-14-cdlg-wrapper-mvp.md](superpowers/plans/2026-08-14-cdlg-wrapper-mvp.md)
 
@@ -28,7 +28,7 @@ acceptance scenarios have independent evidence and closure verification.
 | `CDLGW-002` | External CDLG Execution and Raw Artifact Capture | complete | Task 3 | `CDLGW-001` | [Closure evidence](../outputs/worklogs/2026-08-14-2225-REPORT-CDLGW-002-external-cdlg-runner.md) covers all acceptance scenarios. |
 | `CDLGW-003` | Version Reconstruction and Structure Artifacts | complete | Tasks 4-5 | `CDLGW-002` | [Corrected closure evidence](../outputs/worklogs/2026-08-14-2309-REPORT-CDLGW-003-contract-correction.md) covers all acceptance scenarios against the real CDLG artifact contract. |
 | `CDLGW-004` | Execution Enrichment and Unified XES | complete | Tasks 6-7 | `CDLGW-003` | [Closure evidence](../outputs/worklogs/2026-08-14-2358-REPORT-CDLGW-004-execution-enrichment-unified-xes.md) covers lifecycle/resource/time enrichment, unified XES assembly, and draft evidence writing. |
-| `CDLGW-005` | Validation, Publication, and CLI | planned | Tasks 8-9 | `CDLGW-004` | CLI publishes only strictly validated dataset bundles and preserves failed-run diagnostics. |
+| `CDLGW-005` | Validation, Publication, and CLI | in-progress | Tasks 8-9 | `CDLGW-004` | [TDD proposal](superpowers/plans/2026-08-15-cdlgw-005-tdd-plan.md) awaits approval. |
 | `CDLGW-006` | End-to-End and bpm_prediction Compatibility | planned | Task 10 | `CDLGW-005` | Real CDLG run and separate downstream compatibility smoke test pass. |
 
 ## Agent Scenario Cards
