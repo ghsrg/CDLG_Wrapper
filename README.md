@@ -88,14 +88,29 @@ ignored runtime copy under `work/`, captures stdout and stderr, and copies the
 raw XES plus `drift_info.csv` into staging. It does not import CDLG modules,
 install CDLG into the wrapper environment, or modify the pinned checkout.
 
+## Wrapper CLI
+
+The non-interactive wrapper entry point is:
+
+```powershell
+.\.venv\Scripts\python.exe -m wrapper.generate_benchmark --config configs\cdlg_experiment.yaml
+```
+
+The CLI loads and validates the YAML configuration, delegates to the generation
+pipeline, prints the published dataset path on success, and maps expected
+wrapper failures to the documented non-zero exit codes. The strict bundle
+validator and safe publication layer are implemented; the real pinned-CDLG
+end-to-end compatibility run remains the `CDLGW-006` integration slice.
+
 ## Status
 
 The first-experiment architecture and specification are approved. The wrapper
 currently includes the configuration contract, external CDLG runner layer,
 version reconstruction, in-memory version annotation, deterministic BPMN/PTML
-structure export, lifecycle/resource/time enrichment, unified XES assembly, and
-draft evidence writing. Later slices still need strict validation, publication,
-CLI orchestration, and end-to-end compatibility work.
+structure export, lifecycle/resource/time enrichment, unified XES assembly,
+draft evidence writing, strict bundle validation, safe publication, and the
+non-interactive CLI surface. The remaining planned slice is end-to-end
+compatibility work.
 
 ## License
 

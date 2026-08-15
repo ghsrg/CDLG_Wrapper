@@ -174,7 +174,9 @@ published benchmark artifacts.
 - Provide one non-interactive CLI entry point.
 - Use `configs/` for committed example and experiment configurations.
 - Use the planned invocation form
-  `python wrapper/generate_benchmark.py --config <config-path>`.
+  `python -m wrapper.generate_benchmark --config <config-path>`.
+- The CLI prints only the published dataset path on success. Expected wrapper
+  failures are reported to stderr with the documented typed exit code.
 - Provide `scripts/run_cdlg.ps1` and `scripts/run_cdlg.sh` as thin
   platform-specific subprocess launchers.
 - Do not extend CDLG's legacy line-based parameter format for wrapper-specific settings.
@@ -385,6 +387,15 @@ import `bpm_prediction`. Generate downstream XES/BPMN configurations and a
 machine-readable compatibility report so `bpm_prediction` can run its own parser,
 topology-ingestion, and activity-alignment smoke tests in its separate virtual
 environment before the dataset is used for training.
+
+The implemented local validator checks required bundle files, manifest-relative
+artifact paths, unified XES trace counts and version allocations, required
+trace/event attributes, exact lifecycle pairs, globally non-overlapping resource
+intervals, stable in-trace event order by timestamp and lifecycle tie-break,
+raw CDLG XES/parameter/stdout/stderr evidence, validation and topology-alignment
+reports, downstream compatibility configuration files, BPMN/PTML parseability,
+BPMN sequence-flow references, per-version XES-to-BPMN activity alignment, and
+`checksums.sha256` integrity before publication.
 
 ### XES BPMN-Specific Attributes
 
@@ -722,6 +733,9 @@ sequence from parallelism during replay.
   structural distance, overlap, or event distribution.
 - Write the run into a unique staging directory. Publish the final dataset
   directory only after strict validation and checksum generation succeed.
+- Promotion from staging to the published dataset directory must refuse an
+  existing target and use a same-filesystem rename rather than copying partial
+  results into place.
 - On failure, preserve the staging evidence under a clearly marked failed-run
   directory with `status: failed`; it must not be discoverable as a valid dataset.
 - Do not overwrite an existing dataset directory in the first implementation.
