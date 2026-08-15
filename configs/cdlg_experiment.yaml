@@ -1,9 +1,9 @@
 dataset:
-  name: cdlg_data
+  name: cdlg_complex_data
   total_traces: 2000
   version_count: 5
 cdlg:
-  process_tree_complexity: middle
+  process_tree_complexity: complex
   evolution_proportion: 0.2
   drift_type: sudden
   noise_enabled: false
@@ -12,11 +12,11 @@ cdlg:
 lifecycle:
   assign_enabled: false
 resources:
-  pool_size: 3
+  pool_size: 5
 temporal:
-  arrival_rate: 1.0
+  arrival_rate: 0.5
   duration_mu: 0.0
-  duration_sigma: 1.0
+  duration_sigma: 0.5
   epoch: "2026-01-01T00:00:00Z"
 output:
   export_per_version_xes: false
