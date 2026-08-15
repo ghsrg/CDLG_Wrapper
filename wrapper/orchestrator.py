@@ -95,7 +95,12 @@ def run_generation_pipeline(
         _write_run_log(run_log_path, stage, "started", component)
         cdlg_result = deps.run_cdlg(
             runtime_dir=runtime_dir,
-            python_executable=Path(str(resolved_config.cdlg.python_executable or "")),
+            python_executable=_resolve_against_root(
+                Path(str(resolved_config.cdlg.python_executable or "")),
+                root,
+            )
+            if resolved_config.cdlg.python_executable
+            else Path(""),
             staging_raw_dir=staging_dir / "raw",
         )
         _write_run_log(run_log_path, stage, "passed", component)
@@ -123,7 +128,14 @@ def run_generation_pipeline(
         stage = "export_structures"
         component = "StructureExporter"
         _write_run_log(run_log_path, stage, "started", component)
-        structures = deps.export_structures(snapshots=metadata.snapshots, output_root=staging_dir)
+        raw_drift_bytes = cdlg_result.raw_drift_csv_path.read_bytes() if cdlg_result.raw_drift_csv_path.is_file() else b""
+        generation_hash = hashlib.sha256(raw_drift_bytes).hexdigest()[:8] if raw_drift_bytes else run_id[:8]
+        dataset_name = f"{resolved_config.dataset.name}_{generation_hash}"
+        structures = deps.export_structures(
+            snapshots=metadata.snapshots,
+            output_root=staging_dir,
+            process_key=dataset_name,
+        )
         _write_run_log(run_log_path, stage, "passed", component)
 
         stage = "enrich_traces"
@@ -146,7 +158,7 @@ def run_generation_pipeline(
         _write_run_log(run_log_path, stage, "started", component)
         dataset_path = staging_dir / "dataset.xes"
         debug_dir = staging_dir / "debug/xes_by_version" if resolved_config.output.export_per_version_xes else None
-        xes_log = deps.assemble_xes(enriched)
+        xes_log = deps.assemble_xes(enriched, dataset_name=dataset_name)
         deps.write_xes(xes_log, dataset_path, per_version_debug_dir=debug_dir)
         _write_run_log(run_log_path, stage, "passed", component)
 
@@ -175,7 +187,7 @@ def run_generation_pipeline(
         version_counts = _version_counts(enriched.traces)
         downstream_paths = deps.write_downstream_artifacts(
             staging_dir=staging_dir,
-            dataset_name=DATASET_NAME,
+            dataset_name=dataset_name,
             version_ids=resolved_config.dataset.version_ids,
             trace_count=len(enriched.traces),
             version_counts=version_counts,

@@ -13,9 +13,9 @@ from wrapper.enrichment import EnrichedLog, EnrichedTrace
 TRANSITION_ORDER = {"assign": 0, "start": 1, "complete": 2}
 
 
-def assemble_xes(enriched_log: EnrichedLog) -> EventLog:
+def assemble_xes(enriched_log: EnrichedLog, dataset_name: str = "cdlg_versioned_dataset") -> EventLog:
     log = EventLog()
-    log.attributes["concept:name"] = "cdlg_versioned_dataset"
+    log.attributes["concept:name"] = dataset_name
     log.attributes["sim:generated_by"] = "cdlg_tool_wrapper"
     for enriched_trace in enriched_log.traces:
         log.append(_assemble_trace(enriched_trace))

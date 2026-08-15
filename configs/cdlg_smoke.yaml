@@ -1,4 +1,5 @@
 dataset:
+  name: cdlg_smoke
   total_traces: 9
   version_count: 3
 cdlg:

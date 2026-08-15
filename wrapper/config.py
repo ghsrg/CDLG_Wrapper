@@ -16,6 +16,7 @@ ALLOWED_DRIFT_TYPES = {"sudden"}
 
 @dataclass(frozen=True)
 class DatasetConfig:
+    name: str
     total_traces: int
     version_count: int
     version_ids: tuple[str, ...]
@@ -75,6 +76,10 @@ def load_config(path: Path) -> ResolvedConfig:
     temporal_raw = _optional_mapping(raw, "temporal")
     output_raw = _optional_mapping(raw, "output")
 
+    dataset_name = _require_non_empty_string(
+        dataset_raw.get("name", dataset_raw.get("dataset_name", "cdlg_dataset")),
+        "dataset.name",
+    )
     total_traces = _require_positive_int(
         dataset_raw.get("total_traces"),
         "dataset.total_traces",
@@ -91,6 +96,7 @@ def load_config(path: Path) -> ResolvedConfig:
 
     return ResolvedConfig(
         dataset=DatasetConfig(
+            name=dataset_name,
             total_traces=total_traces,
             version_count=version_count,
             version_ids=version_ids,

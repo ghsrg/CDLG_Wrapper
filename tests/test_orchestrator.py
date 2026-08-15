@@ -163,9 +163,9 @@ def _dependencies(
         _ = kwargs
         return SimpleNamespace(traces=("annotated",))
 
-    def structures(*, snapshots, output_root):
+    def structures(*, snapshots, output_root, **kwargs):
         calls.append("structures")
-        _ = snapshots
+        _ = (snapshots, kwargs)
         bpmn = output_root / "models/bpmn/v1.bpmn"
         ptml = output_root / "models/ptml/v1.ptml"
         catalog = output_root / "models/process_definitions.csv"
@@ -221,8 +221,9 @@ def _dependencies(
             carryover_summary={"same_version": 1},
         )
 
-    def assemble_xes(enriched):
+    def assemble_xes(enriched, **kwargs):
         calls.append("assemble_xes")
+        _ = kwargs
         return enriched
 
     def write_xes(log, path, *, per_version_debug_dir=None):

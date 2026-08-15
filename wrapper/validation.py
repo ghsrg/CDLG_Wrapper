@@ -405,11 +405,11 @@ def _get(payload: dict[str, Any], path: tuple[str, ...]) -> Any:
 def _validate_bpmn(bpmn_path: Path, errors: list[str]) -> set[str]:
     try:
         root = ET.parse(bpmn_path).getroot()
-        bpmn_importer.apply(str(bpmn_path))
     except Exception as error:
         errors.append(f"BPMN cannot be parsed: {error}")
         return set()
 
+    before_error_count = len(errors)
     ids = [element.attrib["id"] for element in root.findall(".//*[@id]")]
     if len(ids) != len(set(ids)):
         errors.append("BPMN IDs are not unique")
@@ -417,6 +417,20 @@ def _validate_bpmn(bpmn_path: Path, errors: list[str]) -> set[str]:
     for flow in root.findall(".//bpmn:sequenceFlow", BPMN_QUERY_NS):
         if flow.attrib.get("sourceRef") not in id_set or flow.attrib.get("targetRef") not in id_set:
             errors.append("BPMN sequence flow references missing endpoint")
+    flow_ids = {flow.attrib.get("id") for flow in root.findall(".//bpmn:sequenceFlow", BPMN_QUERY_NS)}
+    for incoming in root.findall(".//bpmn:incoming", BPMN_QUERY_NS):
+        if incoming.text and incoming.text.strip() not in flow_ids:
+            errors.append(f"BPMN incoming references missing flow: {incoming.text.strip()}")
+    for outgoing in root.findall(".//bpmn:outgoing", BPMN_QUERY_NS):
+        if outgoing.text and outgoing.text.strip() not in flow_ids:
+            errors.append(f"BPMN outgoing references missing flow: {outgoing.text.strip()}")
+
+    try:
+        bpmn_importer.apply(str(bpmn_path))
+    except Exception as error:
+        if len(errors) == before_error_count:
+            errors.append(f"BPMN cannot be parsed: {error}")
+
     return {task.attrib["name"] for task in root.findall(".//bpmn:task", BPMN_QUERY_NS)}
 
 

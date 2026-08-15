@@ -33,19 +33,19 @@ def test_given_snapshots_when_structures_exported_then_artifact_pairs_and_catalo
 
     assert _catalog_rows(first.catalog_path) == [
         {
-            "proc_def_id": "cdlg_v1",
+            "proc_def_id": "cdlg_dataset_v1",
             "proc_def_key": "cdlg_dataset",
             "version": "v1",
             "tenant_id": "",
-            "deployment_id": "cdlg_deployment_v1",
+            "deployment_id": "deployment_cdlg_dataset_v1",
             "bpmn_path": "models/bpmn/v1.bpmn",
         },
         {
-            "proc_def_id": "cdlg_v2",
+            "proc_def_id": "cdlg_dataset_v2",
             "proc_def_key": "cdlg_dataset",
             "version": "v2",
             "tenant_id": "",
-            "deployment_id": "cdlg_deployment_v2",
+            "deployment_id": "deployment_cdlg_dataset_v2",
             "bpmn_path": "models/bpmn/v2.bpmn",
         },
     ]
@@ -74,6 +74,17 @@ def test_given_unchanged_activity_when_bpmn_normalized_then_task_id_is_stable_an
         for source_ref, target_ref in _sequence_flow_refs(artifact.bpmn_path):
             assert source_ref in ids
             assert target_ref in ids
+
+        root = ET.parse(artifact.bpmn_path).getroot()
+        flow_ids = {flow.attrib["id"] for flow in root.findall(".//bpmn:sequenceFlow", BPMN_NS)}
+        for incoming in root.findall(".//bpmn:incoming", BPMN_NS):
+            assert incoming.text and incoming.text.strip() in flow_ids
+        for outgoing in root.findall(".//bpmn:outgoing", BPMN_NS):
+            assert outgoing.text and outgoing.text.strip() in flow_ids
+
+        di_plane = root.find(".//{http://www.omg.org/spec/BPMN/20100524/DI}BPMNPlane")
+        assert di_plane is not None
+        assert di_plane.attrib["bpmnElement"] == "process_cdlg_dataset"
 
 
 def test_given_normalized_id_collision_when_exporting_bpmn_then_deterministic_suffix_is_added(tmp_path, monkeypatch):
@@ -156,6 +167,17 @@ def test_given_duplicate_visible_labels_when_structures_exported_then_alignment_
             snapshots=(ProcessTreeSnapshot(version_id="v1", process_tree="->('A','A')"),),
             output_root=tmp_path,
         )
+
+
+def test_given_multi_child_loop_when_structures_exported_then_bpmn_is_valid(tmp_path):
+    tree_str = "+( 'a', ->( *( X( X( 'b', 'i' ), 'h' ), ->( 'c', 'g' ), 'Random activity 1' ), ->( *( 'd', ->( *( 'e', 'k', 'Random activity 2' ), 'l' ) ), +( 'f', 'j' ) ) ) )"
+    result = export_structures(
+        snapshots=(ProcessTreeSnapshot(version_id="v1", process_tree=tree_str),),
+        output_root=tmp_path,
+    )
+    assert result.artifacts[0].bpmn_path.is_file()
+    assert bpmn_importer.apply(str(result.artifacts[0].bpmn_path)) is not None
+    assert "a" in _task_ids_by_name(result.artifacts[0].bpmn_path)
 
 
 def _catalog_rows(path):

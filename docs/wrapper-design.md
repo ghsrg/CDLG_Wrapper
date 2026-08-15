@@ -214,6 +214,7 @@ published benchmark artifacts.
 
 ### Trace Allocation Contract
 
+- Configure an optional string `dataset.name` (defaults to `"cdlg_dataset"`) to identify the dataset family. The wrapper combines this name with a deterministic structure hash (`<dataset_name>_<structure_hash>`) for downstream process definitions (`proc_def_key`, `proc_def_id`, `deployment_id`), BPMN XML process elements, and Neo4j knowledge graph models to prevent database collisions across multiple generations.
 - Configure one positive integer `dataset.total_traces` for the final XES.
 - Allocate traces equally across all configured process versions by default.
 - For five versions, target approximately 20% of the complete dataset per version.

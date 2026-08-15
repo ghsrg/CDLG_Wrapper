@@ -1,5 +1,6 @@
 dataset:
-  total_traces: 1000
+  name: cdlg_data
+  total_traces: 2000
   version_count: 5
 cdlg:
   process_tree_complexity: middle
@@ -7,6 +8,7 @@ cdlg:
   drift_type: sudden
   noise_enabled: false
   checkout_path: CDLG
+  python_executable: .venv/Scripts/python.exe
 lifecycle:
   assign_enabled: false
 resources:
