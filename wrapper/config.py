@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -41,11 +42,26 @@ class ResourceConfig:
 
 
 @dataclass(frozen=True)
+class TemporalConfig:
+    arrival_rate: float
+    duration_mu: float
+    duration_sigma: float
+    epoch: datetime
+
+
+@dataclass(frozen=True)
+class OutputConfig:
+    export_per_version_xes: bool
+
+
+@dataclass(frozen=True)
 class ResolvedConfig:
     dataset: DatasetConfig
     cdlg: CdlgConfig
     lifecycle: LifecycleConfig
     resources: ResourceConfig
+    temporal: TemporalConfig
+    output: OutputConfig
     trace_allocation: tuple[int, ...]
     cdlg_traces_per_version: int
 
@@ -56,6 +72,8 @@ def load_config(path: Path) -> ResolvedConfig:
     cdlg_raw = _optional_mapping(raw, "cdlg")
     lifecycle_raw = _optional_mapping(raw, "lifecycle")
     resources_raw = _optional_mapping(raw, "resources")
+    temporal_raw = _optional_mapping(raw, "temporal")
+    output_raw = _optional_mapping(raw, "output")
 
     total_traces = _require_positive_int(
         dataset_raw.get("total_traces"),
@@ -117,6 +135,30 @@ def load_config(path: Path) -> ResolvedConfig:
                 "resources.pool_size",
             ),
         ),
+        temporal=TemporalConfig(
+            arrival_rate=_require_positive_float(
+                temporal_raw.get("arrival_rate", 1.0),
+                "temporal.arrival_rate",
+            ),
+            duration_mu=_require_float(
+                temporal_raw.get("duration_mu", 0.0),
+                "temporal.duration_mu",
+            ),
+            duration_sigma=_require_non_negative_float(
+                temporal_raw.get("duration_sigma", 1.0),
+                "temporal.duration_sigma",
+            ),
+            epoch=_require_utc_datetime(
+                temporal_raw.get("epoch", "2026-01-01T00:00:00Z"),
+                "temporal.epoch",
+            ),
+        ),
+        output=OutputConfig(
+            export_per_version_xes=_require_bool(
+                output_raw.get("export_per_version_xes", False),
+                "output.export_per_version_xes",
+            ),
+        ),
         trace_allocation=trace_allocation,
         cdlg_traces_per_version=cdlg_traces_per_version(trace_allocation),
     )
@@ -171,12 +213,36 @@ def _require_choice(value: object, field: str, allowed: set[str]) -> str:
 
 
 def _require_positive_float(value: object, field: str) -> float:
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
-        raise ConfigurationError(f"{field} must be a number")
-    resolved = float(value)
+    resolved = _require_float(value, field)
     if resolved <= 0:
         raise ConfigurationError(f"{field} must be greater than zero")
     return resolved
+
+
+def _require_non_negative_float(value: object, field: str) -> float:
+    resolved = _require_float(value, field)
+    if resolved < 0:
+        raise ConfigurationError(f"{field} must be greater than or equal to zero")
+    return resolved
+
+
+def _require_float(value: object, field: str) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise ConfigurationError(f"{field} must be a number")
+    return float(value)
+
+
+def _require_utc_datetime(value: object, field: str) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        raise ConfigurationError(f"{field} must be an ISO-8601 UTC timestamp string")
+    try:
+        normalized = value.strip().replace("Z", "+00:00")
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as error:
+        raise ConfigurationError(f"{field} must be an ISO-8601 UTC timestamp string") from error
+    if parsed.tzinfo is None:
+        raise ConfigurationError(f"{field} must include UTC timezone")
+    return parsed.astimezone(timezone.utc)
 
 
 def _require_bool(value: object, field: str) -> bool:

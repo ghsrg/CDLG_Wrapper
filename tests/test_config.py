@@ -21,6 +21,11 @@ def test_given_minimal_config_when_loaded_then_first_experiment_defaults_resolve
     assert resolved.cdlg.noise_enabled is False
     assert resolved.lifecycle.assign_enabled is False
     assert resolved.resources.pool_size == 3
+    assert resolved.temporal.arrival_rate == 1.0
+    assert resolved.temporal.duration_mu == 0.0
+    assert resolved.temporal.duration_sigma == 1.0
+    assert resolved.temporal.epoch.isoformat() == "2026-01-01T00:00:00+00:00"
+    assert resolved.output.export_per_version_xes is False
     assert resolved.cdlg.checkout_path == Path("CDLG")
 
 
@@ -32,6 +37,10 @@ def test_given_minimal_config_when_loaded_then_first_experiment_defaults_resolve
         "cdlg:\n  process_tree_complexity: unsupported\ndataset:\n  total_traces: 100\n",
         "cdlg:\n  evolution_proportion: 0\ndataset:\n  total_traces: 100\n",
         "cdlg:\n  python_executable: '   '\ndataset:\n  total_traces: 100\n",
+        "temporal:\n  arrival_rate: 0\ndataset:\n  total_traces: 100\n",
+        "temporal:\n  duration_sigma: -1\ndataset:\n  total_traces: 100\n",
+        "temporal:\n  epoch: '2026-01-01T00:00:00'\ndataset:\n  total_traces: 100\n",
+        "output:\n  export_per_version_xes: maybe\ndataset:\n  total_traces: 100\n",
     ],
 )
 def test_given_invalid_override_when_loaded_then_configuration_error(tmp_path: Path, yaml_text: str):

@@ -92,10 +92,10 @@ install CDLG into the wrapper environment, or modify the pinned checkout.
 
 The first-experiment architecture and specification are approved. The wrapper
 currently includes the configuration contract, external CDLG runner layer,
-version reconstruction, in-memory version annotation, and deterministic
-BPMN/PTML structure export. Later slices still need lifecycle/resource/time
-enrichment, unified XES serialization, validation, publication, and end-to-end
-compatibility work.
+version reconstruction, in-memory version annotation, deterministic BPMN/PTML
+structure export, lifecycle/resource/time enrichment, unified XES assembly, and
+draft evidence writing. Later slices still need strict validation, publication,
+CLI orchestration, and end-to-end compatibility work.
 
 ## License
 

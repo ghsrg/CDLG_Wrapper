@@ -11,3 +11,10 @@ lifecycle:
   assign_enabled: false
 resources:
   pool_size: 3
+temporal:
+  arrival_rate: 1.0
+  duration_mu: 0.0
+  duration_sigma: 1.0
+  epoch: "2026-01-01T00:00:00Z"
+output:
+  export_per_version_xes: false
